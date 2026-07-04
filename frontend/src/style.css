@@ -1,0 +1,78 @@
+/* 全局样式与设计令牌 —— 暗黑赛博风 */
+:root {
+  --bg-base: #0b1020; /* 深空蓝背景 */
+  --bg-card: #151b30; /* 卡片/面板 */
+  --bg-card-2: #1c2440; /* 更亮一层 */
+  --primary: #4f7cff; /* 电光蓝紫，主按钮/高亮 */
+  --primary-glow: rgba(79, 124, 255, 0.5);
+  --accent: #38d39f; /* 青绿，成功/强调 */
+  --text-main: #e6e9f0; /* 主文字 */
+  --text-dim: #8b93a7; /* 次要文字 */
+  --gold: #d4af37; /* 幸运提示专用金色 */
+  --danger: #ff6b6b;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: -apple-system, system-ui, 'PingFang SC', 'Microsoft YaHei',
+    sans-serif;
+  background: var(--bg-base);
+  color: var(--text-main);
+  overscroll-behavior: none;
+}
+
+/* 星空背景：径向渐变叠加 */
+#app {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(79, 124, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 85%, rgba(56, 211, 159, 0.1), transparent 40%),
+    var(--bg-base);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+}
+
+input {
+  font-family: inherit;
+}
+
+/* 毛玻璃按钮基类 */
+.glass-btn {
+  width: 100%;
+  padding: 16px;
+  font-size: 17px;
+  font-weight: 600;
+  border-radius: var(--radius);
+  color: var(--text-main);
+  background: rgba(79, 124, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(79, 124, 255, 0.35);
+  transition: all 0.2s;
+}
+.glass-btn:active {
+  transform: scale(0.97);
+}
+.glass-btn.primary {
+  background: var(--primary);
+  box-shadow: 0 0 20px var(--primary-glow);
+}
+.glass-btn:disabled {
+  opacity: 0.45;
+}
