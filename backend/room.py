@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-import protocol
+from backend import protocol
 
 if TYPE_CHECKING:
     from fastapi import WebSocket

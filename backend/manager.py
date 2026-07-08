@@ -11,8 +11,8 @@ import random
 import time
 import uuid
 
-import protocol
-from room import Player, Room, Round
+from backend import protocol
+from backend.room import Player, Room, Round
 
 # 房间空闲多久后回收（秒）
 ROOM_TTL = 30 * 60
