@@ -276,7 +276,7 @@ defineExpose({ shake, closeCup, resetIdle, markSettled, currentState });
 /* 托盘底座 */
 .tray {
   position: absolute;
-  bottom: 40px;
+  bottom: 0px;
   left: 50%;
   transform: translateX(-50%);
   width: 320px;
@@ -303,7 +303,7 @@ defineExpose({ shake, closeCup, resetIdle, markSettled, currentState });
 /* 骰子 */
 .dice-tray {
   position: absolute;
-  bottom: 58px;
+  bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
   width: 240px;
@@ -322,7 +322,7 @@ defineExpose({ shake, closeCup, resetIdle, markSettled, currentState });
 /* 骰盅(碗) */
 .cup {
   position: absolute;
-  bottom: 50px;
+  bottom: 10px;
   left: 50%;
   width: 300px;
   height: 250px;
@@ -381,7 +381,7 @@ defineExpose({ shake, closeCup, resetIdle, markSettled, currentState });
   );
   pointer-events: none;
 }
-/* 口沿描金：底部椭圆金边，模拟盅口 */
+/* 口沿描金：底部椭圆金边，模拟盅口（进一步降低可见度） */
 .cup-rim {
   position: absolute;
   left: 50%;
@@ -393,8 +393,8 @@ defineExpose({ shake, closeCup, resetIdle, markSettled, currentState });
   background: radial-gradient(
     ellipse at 50% 45%,
     transparent 55%,
-    rgba(201, 162, 75, 0.3) 72%,
-    rgba(230, 200, 119, 0.5) 85%,
+    rgba(201, 162, 75, 0.06) 72%,
+    rgba(230, 200, 119, 0.09) 85%,
     transparent 92%
   );
   pointer-events: none;
