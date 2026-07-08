@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game';
+import Icon from '../components/Icon.vue';
 
 const router = useRouter();
 const store = useGameStore();
@@ -42,16 +43,21 @@ function submitJoin() {
 <template>
   <div class="home">
     <div class="hero">
-      <div class="dice-float">🎲</div>
-      <h1>骰盅</h1>
+      <div class="dice-float"><Icon name="dice" :size="60" /></div>
+      <h1>骰 盅</h1>
+      <div class="divider"><span></span></div>
       <p class="tagline">摇一摇，掀开你的运气</p>
     </div>
 
     <div class="panel">
       <!-- 首页两个入口 -->
       <template v-if="mode === 'home'">
-        <button class="glass-btn primary" @click="mode = 'create'">+ 创建房间</button>
-        <button class="glass-btn" @click="mode = 'join'">→ 加入房间</button>
+        <button class="glass-btn primary" @click="mode = 'create'">
+          <Icon name="plus" :size="18" /> 创建房间
+        </button>
+        <button class="glass-btn" @click="mode = 'join'">
+          <Icon name="arrow" :size="18" /> 加入房间
+        </button>
       </template>
 
       <!-- 创建房间表单 -->
@@ -96,22 +102,53 @@ function submitJoin() {
   text-align: center;
 }
 .dice-float {
-  font-size: 64px;
-  animation: float 3s ease-in-out infinite;
+  display: inline-flex;
+  color: var(--gold);
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+  animation: float 3.4s ease-in-out infinite;
 }
 @keyframes float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-14px); }
+  50% { transform: translateY(-12px); }
 }
 h1 {
-  font-size: 44px;
+  font-family: var(--font-serif);
+  font-size: 46px;
   font-weight: 700;
-  letter-spacing: 6px;
-  margin: 12px 0 8px;
+  letter-spacing: 8px;
+  margin: 14px 0 0;
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold-deep));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+/* 细金分隔线 */
+.divider {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 12px;
+}
+.divider span {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  position: relative;
+}
+.divider span::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--gold);
 }
 .tagline {
   color: var(--text-dim);
   font-size: 15px;
+  letter-spacing: 2px;
   margin: 0;
 }
 .panel {
@@ -119,18 +156,25 @@ h1 {
   flex-direction: column;
   gap: 14px;
 }
+.panel .glass-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
 .field {
   width: 100%;
   padding: 15px 16px;
   font-size: 16px;
   border-radius: var(--radius);
   background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(201, 162, 75, 0.18);
   color: var(--text-main);
   outline: none;
+  transition: border-color 0.2s;
 }
 .field:focus {
-  border-color: var(--primary);
+  border-color: var(--gold);
 }
 .field::placeholder {
   color: var(--text-dim);
@@ -153,7 +197,8 @@ h1 {
   height: 38px;
   border-radius: 10px;
   background: var(--bg-card-2);
-  color: var(--text-main);
+  border: 1px solid var(--gold-line);
+  color: var(--gold);
   font-size: 22px;
 }
 .stepper .num {
@@ -162,10 +207,6 @@ h1 {
   font-weight: 600;
   min-width: 24px;
   text-align: center;
-}
-.glass-btn.ghost {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.12);
 }
 .error {
   text-align: center;

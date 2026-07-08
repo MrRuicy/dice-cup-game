@@ -4,36 +4,15 @@ import { useRouter } from 'vue-router';
 import { useGameStore } from '../stores/game';
 import DiceCupGame from '../components/DiceCupGame.vue';
 import Dice from '../components/Dice.vue';
+import Icon from '../components/Icon.vue';
 
 const router = useRouter();
 const store = useGameStore();
 const cupRef = ref<InstanceType<typeof DiceCupGame> | null>(null);
 
-// 调试：暴露 store 到 window
-if (typeof window !== 'undefined') {
-  (window as any).$store = store;
-}
-
 // 幸运嘉宾选择(在统计弹窗里)
 const selectedPlayers = ref<string[]>([]);
 const randomCount = ref(0); // 随机选择人数
-
-// 调试：监听关键状态变化
-watch(
-  () => [store.isHost, store.phase, store.playerId, store.hostId, store.myDice],
-  ([isHost, phase, playerId, hostId, myDice]) => {
-    console.log('[ROOM DEBUG]', {
-      isHost,
-      phase,
-      playerId,
-      hostId,
-      myDice,
-      shouldShowEndButton: isHost && phase === 'rolling' && myDice,
-      shouldShowRollButton: phase === 'rolling' && !myDice
-    });
-  },
-  { immediate: true }
-);
 
 // 计算全场点数分布
 function getDiceStats() {
@@ -86,20 +65,12 @@ watch(
 let lastRound = 0;
 watch(
   () => [store.phase, store.round] as const,
-  ([phase, round], [prevPhase, prevRound]) => {
-    console.log('[ROOM WATCH] phase:', prevPhase, '→', phase, ', round:', prevRound, '→', round);
-
+  ([phase, round]) => {
     // 进入 rolling 阶段，且 round 增加（真正的新一轮）
     if (phase === 'rolling' && round !== lastRound && lastRound !== 0) {
-      console.log('[ROOM] 检测到新一轮（round 变化），清空本地数据');
       store.resetRoundView();
       store.isLucky = false;
-      if (cupRef.value) {
-        if (cupRef.value.state.value !== 'idle') {
-          cupRef.value.state.value = 'idle';
-        }
-        cupRef.value.closeCup();
-      }
+      cupRef.value?.resetIdle();
     }
 
     // 更新 lastRound
@@ -117,15 +88,11 @@ watch(
       // 判断是重连补发还是正常投掷
       if (store.isReconnect) {
         // 重连补发，跳过动画，直接设为 settled
-        console.log('[ROOM] 重连恢复，跳过动画');
         setTimeout(() => {
-          if (cupRef.value && cupRef.value.state.value === 'idle') {
-            cupRef.value.state.value = 'settled';
-          }
+          cupRef.value?.markSettled();
         }, 50);
       } else {
         // 正常投掷，触发摇盅动画
-        console.log('[ROOM] 正常投掷，触发动画');
         setTimeout(() => {
           cupRef.value?.shake();
         }, 50);
@@ -134,18 +101,11 @@ watch(
   }
 );
 
-// 监听 isLucky 变化
-watch(
-  () => store.isLucky,
-  (val) => {
-    console.log('[ROOM] isLucky 变化:', val);
-  }
-);
-
-function statusIcon(status: string): string {
-  if (status === 'rolled') return '✓';
-  if (status === 'waiting') return '⏳';
-  return '—';
+// 玩家状态图标名（映射到 Icon 组件）
+function statusIconName(status: string): string {
+  if (status === 'rolled') return 'check';
+  if (status === 'waiting') return 'hourglass';
+  return '';
 }
 
 function onLeave() {
@@ -195,7 +155,9 @@ function startNextRound() {
     <header class="topbar">
       <span class="room-code">房间 {{ store.roomCode }}</span>
       <span class="round-badge">第 {{ store.round || '-' }} 轮</span>
-      <button class="menu-btn" @click="onLeave">⋯</button>
+      <button class="menu-btn" @click="onLeave" aria-label="菜单">
+        <Icon name="menu" :size="22" />
+      </button>
     </header>
 
     <!-- 玩家状态条 -->
@@ -206,7 +168,15 @@ function startNextRound() {
         class="player-chip"
         :class="{ me: p.id === store.playerId, host: p.id === store.hostId }"
       >
-        👤{{ p.nickname }}<b>{{ statusIcon(p.status) }}</b>
+        <Icon v-if="p.id === store.hostId" name="crown" :size="14" class="chip-crown" />
+        <Icon v-else name="user" :size="13" class="chip-user" />
+        <span class="chip-name">{{ p.nickname }}</span>
+        <Icon
+          v-if="statusIconName(p.status)"
+          :name="statusIconName(p.status)"
+          :size="13"
+          class="chip-status"
+        />
       </span>
     </div>
 
@@ -252,22 +222,27 @@ function startNextRound() {
       <!-- 投掷按钮（所有人，rolling 阶段且未投掷） -->
       <button
         v-if="store.phase === 'rolling' && !store.myDice"
-        class="glass-btn primary"
+        class="glass-btn primary roll-btn"
         @click="roll"
       >
-        🎲 投掷
+        <Icon name="dice" :size="20" /> 投 掷
       </button>
     </footer>
 
     <!-- 幸运提示遮罩(1秒后自动消失) -->
     <div v-if="store.isLucky" class="lucky-overlay">
-      ✨ 嘘！房主大大为你施加了魔法 ✨
+      <div class="lucky-card">
+        <Icon name="sparkle" :size="34" />
+        <p>嘘 —— 房主为你施加了魔法</p>
+        <Icon name="sparkle" :size="34" />
+      </div>
     </div>
 
     <!-- 统计结果弹窗(ended 阶段) -->
     <div v-if="store.phase === 'ended' && store.results" class="result-overlay">
       <div class="result-panel">
-        <h3>🎲 本轮结果</h3>
+        <h3>本 轮 结 果</h3>
+        <div class="panel-divider"><span></span></div>
 
         <!-- 全场点数统计 -->
         <div class="dice-stats">
@@ -283,8 +258,8 @@ function startNextRound() {
         <div class="result-list">
           <div v-for="p in store.players" :key="p.id" class="result-item">
             <div class="player-info">
+              <Icon v-if="p.id === store.hostId" name="crown" :size="16" class="host-badge" />
               <span class="player-name">{{ p.nickname }}</span>
-              <span v-if="p.id === store.hostId" class="host-badge">👑</span>
             </div>
             <div v-if="store.results[p.id]" class="dice-display">
               <Dice v-for="(v, i) in store.results[p.id]" :key="i" :value="v" :size="32" />
@@ -295,7 +270,9 @@ function startNextRound() {
 
         <!-- 房主选择下一轮幸运嘉宾 -->
         <div v-if="store.isHost" class="lucky-select-section">
-          <div class="section-title">🎁 选择下一轮幸运嘉宾（可选）</div>
+          <div class="section-title">
+            <Icon name="gift" :size="16" /> 选择下一轮幸运嘉宾（可选）
+          </div>
 
           <!-- 随机选择人数 -->
           <div class="random-count-selector">
@@ -333,7 +310,7 @@ function startNextRound() {
           <button v-if="store.isHost" class="glass-btn primary full-width" @click="startNextRound">
             {{
               Math.max(selectedPlayers.length, randomCount) > 0
-                ? `✨ 施加魔法(${Math.max(selectedPlayers.length, randomCount)}人)并开始下一轮`
+                ? `施加魔法（${Math.max(selectedPlayers.length, randomCount)}人）并开始下一轮`
                 : '开始下一轮'
             }}
           </button>
@@ -357,47 +334,60 @@ function startNextRound() {
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--gold-line);
 }
 .room-code {
-  font-size: 18px;
+  font-family: var(--font-serif);
+  font-size: 19px;
   font-weight: 600;
+  letter-spacing: 2px;
+  color: var(--text-main);
 }
 .round-badge {
-  color: var(--text-dim);
+  color: var(--gold);
   font-size: 14px;
+  letter-spacing: 1px;
 }
 .menu-btn {
+  display: inline-flex;
+  align-items: center;
   background: transparent;
-  color: var(--text-main);
-  font-size: 24px;
-  padding: 0 8px;
+  color: var(--text-dim);
+  padding: 4px 6px;
 }
 .player-bar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   padding: 12px 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--gold-line);
 }
 .player-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 13px;
-  padding: 5px 10px;
+  padding: 5px 11px;
   border-radius: 20px;
   background: var(--bg-card);
+  border: 1px solid transparent;
   color: var(--text-dim);
 }
-.player-chip b {
-  margin-left: 4px;
-  color: var(--accent);
+.chip-crown {
+  color: var(--gold);
+}
+.chip-user {
+  color: var(--text-dim);
+}
+.chip-status {
+  color: var(--gold-bright);
 }
 .player-chip.me {
-  border: 1px solid var(--primary);
+  border-color: var(--gold);
   color: var(--text-main);
 }
-.player-chip.host::before {
-  content: '👑';
-  margin-right: 2px;
+.player-chip.host {
+  background: rgba(201, 162, 75, 0.1);
 }
 .stage {
   flex: 1;
@@ -407,20 +397,23 @@ function startNextRound() {
   justify-content: center;
   gap: 20px;
   padding: 20px;
+  /* 中央毡布聚光：暖绿光晕 */
   background: radial-gradient(
-      circle at 50% 42%,
-      rgba(79, 124, 255, 0.16),
-      transparent 55%
-    ),
-    radial-gradient(circle at 50% 80%, rgba(56, 211, 159, 0.08), transparent 50%);
+      ellipse 70% 55% at 50% 45%,
+      rgba(40, 82, 62, 0.55),
+      transparent 60%
+    );
 }
 .cup-placeholder {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  background: radial-gradient(circle at 40% 30%, #2a3350, #121830);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 4px 20px rgba(0, 0, 0, 0.5), 0 8px 30px rgba(0, 0, 0, 0.4);
+  background: radial-gradient(circle at 45% 35%, #1c4636, #081812);
+  border: 1px solid var(--gold-line);
+  box-shadow:
+    inset 0 4px 22px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 5px rgba(201, 162, 75, 0.05),
+    0 10px 32px rgba(0, 0, 0, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -429,6 +422,7 @@ function startNextRound() {
 .hint {
   color: var(--text-dim);
   font-size: 15px;
+  letter-spacing: 1px;
   padding: 0 20px;
 }
 .result-box {
@@ -458,29 +452,48 @@ function startNextRound() {
   flex-direction: column;
   gap: 12px;
 }
+.roll-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  letter-spacing: 4px;
+}
 .lucky-overlay {
   position: fixed;
   inset: 0;
-  background: linear-gradient(180deg, rgba(212, 175, 55, 0.35), rgba(212, 175, 55, 0.08));
-  backdrop-filter: blur(4px);
+  background: radial-gradient(ellipse at 50% 45%, rgba(20, 44, 33, 0.85), rgba(4, 14, 10, 0.92));
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
   padding: 40px;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--gold);
-  text-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
   animation: luckyIn 0.5s ease;
   z-index: 200;
+}
+.lucky-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--gold-bright);
+}
+.lucky-card p {
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin: 0;
+  color: var(--gold-bright);
+  text-shadow: 0 2px 12px rgba(201, 162, 75, 0.5);
 }
 @keyframes luckyIn {
   from {
     opacity: 0;
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
+    transform: scale(1);
   }
 }
 
@@ -498,23 +511,41 @@ function startNextRound() {
   animation: fadeIn 0.3s ease;
 }
 .result-panel {
-  background: var(--bg-card);
+  background: linear-gradient(180deg, var(--bg-card-2), var(--bg-panel));
+  border: 1px solid var(--gold-line);
   border-radius: var(--radius);
   padding: 24px;
   width: 100%;
   max-width: 420px;
   max-height: 80vh;
   overflow-y: auto;
-  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 16px 55px rgba(0, 0, 0, 0.75);
   animation: slideUp 0.4s ease;
 }
 .result-panel h3 {
-  margin: 0 0 20px;
-  font-size: 22px;
+  font-family: var(--font-serif);
+  margin: 0 0 12px;
+  font-size: 23px;
+  letter-spacing: 4px;
   text-align: center;
+  color: var(--gold-bright);
+}
+/* 面板衬线标题下的细金分隔 */
+.panel-divider {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.panel-divider span {
+  width: 90px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
 }
 .dice-stats {
-  background: rgba(79, 124, 255, 0.08);
+  background: rgba(201, 162, 75, 0.08);
+  border: 1px solid rgba(201, 162, 75, 0.15);
   border-radius: 10px;
   padding: 12px 16px;
   margin-bottom: 20px;
@@ -544,6 +575,7 @@ function startNextRound() {
 }
 .result-item {
   background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(201, 162, 75, 0.1);
   border-radius: 12px;
   padding: 14px 16px;
 }
@@ -559,7 +591,7 @@ function startNextRound() {
   color: var(--text-main);
 }
 .host-badge {
-  font-size: 14px;
+  color: var(--gold);
 }
 .dice-display {
   display: flex;
@@ -571,11 +603,15 @@ function startNextRound() {
   color: var(--text-dim);
 }
 .lucky-select-section {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--gold-line);
   padding-top: 20px;
   margin-bottom: 20px;
 }
 .section-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 14px;
   color: var(--gold);
   margin-bottom: 12px;
@@ -602,7 +638,7 @@ function startNextRound() {
   outline: none;
 }
 .count-input:focus {
-  border-color: var(--primary);
+  border-color: var(--gold);
   background: rgba(255, 255, 255, 0.12);
 }
 .manual-select-label {
@@ -633,6 +669,7 @@ function startNextRound() {
   width: 18px;
   height: 18px;
   cursor: pointer;
+  accent-color: var(--gold);
 }
 .result-actions {
   display: flex;

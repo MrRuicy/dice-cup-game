@@ -129,15 +129,16 @@ export const useGameStore = defineStore('game', {
 
           if (msg.phase === 'ended') {
             setTimeout(() => {
+              console.log('[STORE] 延迟设置 phase = ended');
               this.phase = msg.phase;
             }, 50);
           } else {
             this.phase = msg.phase;
           }
 
-          // 新一轮开始的判断：round 增加 或 (phase 从非 rolling 变为 rolling 且 round 相同)
-          // 注意：不清空 myDice，让 roll_result 消息来管理
-          const isNewRound = msg.round > prevRound;
+          // 新一轮开始的判断：round 增加（但排除刷新重连的情况）
+          // prevRound === 0 表示刚初始化，不应该清空数据
+          const isNewRound = msg.round > prevRound && prevRound !== 0;
           if (isNewRound) {
             console.log('[STORE] 检测到新一轮开始 (round 增加)，清空统计数据');
             this.results = null;

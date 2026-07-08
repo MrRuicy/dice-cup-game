@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { gsap } from 'gsap';
 import Dice from './Dice.vue';
+import Icon from './Icon.vue';
 
 // 完整游戏版骰盅:摇盅动画 → 掀盅手势 → 查看点数
 const props = defineProps<{ dice: number[] }>();
@@ -35,7 +36,6 @@ function setLift(v: number) {
 }
 
 function onStart(e: TouchEvent | MouseEvent) {
-  console.log('[CUP] onStart 触发', 'canLift:', canLift.value, 'state:', state.value);
   if (!canLift.value) return;
   dragging = true;
   startY = getY(e);
@@ -107,7 +107,6 @@ function shake() {
 
   const tl = gsap.timeline({
     onComplete: () => {
-      console.log('[CUP] 摇盅动画完成,切换到 settled');
       state.value = 'settled';
     },
   });
@@ -195,7 +194,23 @@ function shake() {
 
 onMounted(() => setLift(0));
 
-defineExpose({ shake, closeCup, state });
+// 重置为初始待摇状态（新一轮开始时调用）
+function resetIdle() {
+  state.value = 'idle';
+  closeCup();
+}
+
+// 直接标记为已静置（重连补发时调用，跳过摇盅动画）
+function markSettled() {
+  if (state.value === 'idle') state.value = 'settled';
+}
+
+// 当前状态名（供外部只读判断）
+function currentState(): State {
+  return state.value;
+}
+
+defineExpose({ shake, closeCup, resetIdle, markSettled, currentState });
 </script>
 
 <template>
@@ -227,9 +242,14 @@ defineExpose({ shake, closeCup, state });
         @click="toggle"
       >
         <div class="cup-dome">
+          <div class="cup-metal"></div>
           <div class="cup-highlight"></div>
-          <div v-if="state === 'settled'" class="cup-grip">▲<br />上滑掀开</div>
-          <div v-else-if="state === 'shaking'" class="cup-status">摇盅中...</div>
+          <div class="cup-rim"></div>
+          <div v-if="state === 'settled'" class="cup-grip">
+            <Icon name="lift" :size="26" />
+            <span>上滑掀开</span>
+          </div>
+          <div v-else-if="state === 'shaking'" class="cup-status">摇 盅 中</div>
         </div>
       </div>
     </div>
@@ -266,16 +286,18 @@ defineExpose({ shake, closeCup, state });
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  /* 毡布桌面承托：深墨绿绒面 + 香槟金描边圈 */
   background: radial-gradient(
-    ellipse at 50% 40%,
-    #2a3350 0%,
-    #1a2038 55%,
-    #10152a 100%
+    ellipse at 50% 38%,
+    #1c4636 0%,
+    #123328 50%,
+    #081812 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(201, 162, 75, 0.28);
   box-shadow:
-    inset 0 4px 30px rgba(0, 0, 0, 0.6),
-    0 12px 30px rgba(0, 0, 0, 0.5);
+    inset 0 6px 34px rgba(0, 0, 0, 0.65),
+    inset 0 0 0 6px rgba(201, 162, 75, 0.06),
+    0 16px 36px rgba(0, 0, 0, 0.55);
 }
 
 /* 骰子 */
@@ -323,54 +345,92 @@ defineExpose({ shake, closeCup, state });
   position: absolute;
   inset: 0;
   border-radius: 44% 44% 40% 40% / 56% 56% 20% 20%;
+  /* 描金金属骰盅：深绿金属胎 + 竖向拉丝高光 */
   background: linear-gradient(
     100deg,
-    #171d2e 0%,
-    #2c3448 18%,
-    #464f6c 40%,
-    #2e3650 62%,
-    #1b2133 82%,
-    #10141f 100%
+    #0c1f18 0%,
+    #1a3a2c 16%,
+    #2f5a45 38%,
+    #1e4232 60%,
+    #12281f 82%,
+    #081611 100%
   );
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(201, 162, 75, 0.4);
   box-shadow:
-    inset 0 10px 24px rgba(255, 255, 255, 0.12),
-    inset 0 -26px 50px rgba(0, 0, 0, 0.65),
-    inset 20px 0 40px rgba(0, 0, 0, 0.35),
-    inset -20px 0 40px rgba(0, 0, 0, 0.35),
-    0 24px 55px rgba(0, 0, 0, 0.55);
+    inset 0 12px 28px rgba(230, 200, 119, 0.15),
+    inset 0 -28px 54px rgba(0, 0, 0, 0.7),
+    inset 22px 0 44px rgba(0, 0, 0, 0.4),
+    inset -22px 0 44px rgba(0, 0, 0, 0.4),
+    0 26px 58px rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
+/* 金属拉丝：斜向细高光条纹 */
+.cup-metal {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(
+    98deg,
+    transparent 0px,
+    transparent 6px,
+    rgba(255, 255, 255, 0.025) 7px,
+    transparent 9px
+  );
+  pointer-events: none;
+}
+/* 口沿描金：底部椭圆金边，模拟盅口 */
+.cup-rim {
+  position: absolute;
+  left: 50%;
+  bottom: 6%;
+  width: 74%;
+  height: 16%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    transparent 55%,
+    rgba(201, 162, 75, 0.3) 72%,
+    rgba(230, 200, 119, 0.5) 85%,
+    transparent 92%
+  );
+  pointer-events: none;
+}
 .cup-highlight {
   position: absolute;
-  top: 5%;
-  left: 27%;
-  width: 15%;
-  height: 82%;
+  top: 6%;
+  left: 26%;
+  width: 14%;
+  height: 78%;
   border-radius: 50%;
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 255, 255, 0.05) 60%,
+    rgba(255, 255, 255, 0.35),
+    rgba(230, 200, 119, 0.12) 55%,
     transparent
   );
-  filter: blur(4px);
+  filter: blur(5px);
+  pointer-events: none;
 }
 .cup-grip,
 .cup-status {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   text-align: center;
-  color: rgba(230, 233, 240, 0.5);
-  font-size: 14px;
-  line-height: 1.8;
-  letter-spacing: 1px;
+  color: rgba(201, 162, 75, 0.75);
+  font-size: 13px;
+  letter-spacing: 3px;
   z-index: 2;
 }
 .cup-status {
-  color: rgba(230, 233, 240, 0.7);
+  color: rgba(230, 200, 119, 0.85);
+  letter-spacing: 4px;
   animation: pulse 1.5s ease-in-out infinite;
 }
 @keyframes pulse {

@@ -25,7 +25,7 @@ export type ServerMessage =
       diceCount: number;
       players: PublicPlayer[];
     }
-  | { type: 'roll_result'; dice: number[]; isLucky?: boolean }
+  | { type: 'roll_result'; dice: number[]; isLucky?: boolean; isReconnect?: boolean }
   | { type: 'lucky_notice' }
   | {
       type: 'round_result';

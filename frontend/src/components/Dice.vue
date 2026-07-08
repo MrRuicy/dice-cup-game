@@ -36,6 +36,11 @@ const faces = computed(() => [
   { key: 'right', n: layout.value.right, t: 'rotateY(90deg)' },
   { key: 'left', n: layout.value.left, t: 'rotateY(-90deg)' },
 ]);
+
+// 真实骰子规则：1 点与 4 点为红色，其余为黑色
+function isRed(n: number): boolean {
+  return n === 1 || n === 4;
+}
 </script>
 
 <template>
@@ -51,7 +56,11 @@ const faces = computed(() => [
         :style="{ transform: `${f.t} translateZ(${px / 2}px)`, width: px + 'px', height: px + 'px' }"
       >
         <span v-for="cell in 9" :key="cell" class="pip-cell">
-          <i v-if="pipLayout[f.n].includes(cell)" class="pip"></i>
+          <i
+            v-if="pipLayout[f.n].includes(cell)"
+            class="pip"
+            :class="{ red: isRed(f.n) }"
+          ></i>
         </span>
       </div>
     </div>
@@ -69,13 +78,17 @@ const faces = computed(() => [
 }
 .face {
   position: absolute;
-  border-radius: 12px;
-  /* 亚克力白 + 珠光质感:更现代,不旧气 */
-  background: linear-gradient(145deg, #ffffff, #f0f2f5);
+  border-radius: 14px;
+  /* 象牙骰身：温润珠光渐变，比纯白更高级 */
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.9), transparent 45%),
+    linear-gradient(150deg, #fdfaf2 0%, #f3ecdc 55%, #e6dcc4 100%);
   box-shadow:
-    inset 0 3px 6px rgba(255, 255, 255, 0.95),
-    inset 0 -2px 8px rgba(0, 0, 0, 0.12),
-    0 4px 12px rgba(0, 0, 0, 0.15);
+    inset 0 4px 7px rgba(255, 255, 255, 0.9),
+    inset 0 -3px 10px rgba(120, 100, 60, 0.22),
+    inset 3px 0 6px rgba(255, 255, 255, 0.4),
+    inset -3px 0 8px rgba(120, 100, 60, 0.15),
+    0 5px 14px rgba(0, 0, 0, 0.28);
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   grid-template-rows: repeat(3, 1fr);
@@ -88,11 +101,22 @@ const faces = computed(() => [
   justify-content: center;
 }
 .pip {
-  width: 60%;
-  height: 60%;
+  width: 62%;
+  height: 62%;
   border-radius: 50%;
-  /* 凹陷红点:径向渐变 + 内阴影 */
-  background: radial-gradient(circle at 35% 30%, #ff5a5a, #b81d1d);
-  box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.5), 0 1px 1px rgba(255, 255, 255, 0.3);
+  /* 凹陷黑点：径向渐变 + 内阴影，模拟钻孔 */
+  background: radial-gradient(circle at 38% 32%, #4a4a4a, #111 70%);
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.7),
+    inset 0 -1px 2px rgba(255, 255, 255, 0.15),
+    0 1px 1px rgba(255, 255, 255, 0.5);
+}
+.pip.red {
+  /* 红点（1、4 点）：经典中式骰子 */
+  background: radial-gradient(circle at 38% 32%, #e24a3f, #9c1610 72%);
+  box-shadow:
+    inset 0 2px 3px rgba(80, 0, 0, 0.65),
+    inset 0 -1px 2px rgba(255, 200, 190, 0.3),
+    0 1px 1px rgba(255, 255, 255, 0.5);
 }
 </style>

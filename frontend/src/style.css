@@ -1,16 +1,32 @@
-/* 全局样式与设计令牌 —— 暗黑赛博风 */
+/* 全局样式与设计令牌 —— 赌场毡布 · 墨绿描金 */
 :root {
-  --bg-base: #0b1020; /* 深空蓝背景 */
-  --bg-card: #151b30; /* 卡片/面板 */
-  --bg-card-2: #1c2440; /* 更亮一层 */
-  --primary: #4f7cff; /* 电光蓝紫，主按钮/高亮 */
-  --primary-glow: rgba(79, 124, 255, 0.5);
-  --accent: #38d39f; /* 青绿，成功/强调 */
-  --text-main: #e6e9f0; /* 主文字 */
-  --text-dim: #8b93a7; /* 次要文字 */
-  --gold: #d4af37; /* 幸运提示专用金色 */
-  --danger: #ff6b6b;
+  /* 毡布底色：深墨绿绒面 */
+  --felt-deep: #0a1f19;
+  --felt-base: #0e2a22;
+  --felt-raise: #123328;
+
+  /* 卡片/面板：比毡布略暗的哑光深绿 */
+  --bg-card: #10241d;
+  --bg-card-2: #163a2d;
+  --bg-panel: #0d201a;
+
+  /* 香槟金体系 */
+  --gold: #c9a24b;
+  --gold-bright: #e6c877;
+  --gold-deep: #a07b2d;
+  --gold-line: rgba(201, 162, 75, 0.35);
+
+  /* 文字 */
+  --text-main: #f3ead6; /* 暖象牙 */
+  --text-dim: #9aa89f; /* 雾绿灰 */
+  --text-faint: rgba(243, 234, 214, 0.4);
+
+  --danger: #c65b52;
   --radius: 14px;
+
+  /* 衬线标题字体栈 */
+  --font-serif: 'Georgia', 'Times New Roman', 'Songti SC', 'STSong', 'SimSun', serif;
+  --font-sans: -apple-system, system-ui, 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 * {
@@ -26,21 +42,40 @@ body,
 }
 
 body {
-  font-family: -apple-system, system-ui, 'PingFang SC', 'Microsoft YaHei',
-    sans-serif;
-  background: var(--bg-base);
+  font-family: var(--font-sans);
+  background: var(--felt-base);
   color: var(--text-main);
   overscroll-behavior: none;
 }
 
-/* 星空背景：径向渐变叠加 */
+/* 毡布绒面背景：多层径向柔光 + SVG 噪点纤维 */
 #app {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(circle at 20% 15%, rgba(79, 124, 255, 0.12), transparent 40%),
-    radial-gradient(circle at 80% 85%, rgba(56, 211, 159, 0.1), transparent 40%),
-    var(--bg-base);
+    radial-gradient(ellipse 120% 80% at 50% -10%, rgba(30, 66, 52, 0.9), transparent 60%),
+    radial-gradient(ellipse 100% 100% at 50% 120%, rgba(6, 20, 15, 0.9), transparent 55%),
+    var(--felt-base);
+}
+
+/* 毡布纤维纹理：SVG 噪点叠加，营造绒面颗粒感 */
+#app::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* 顶部与底部的暗角，聚焦中央 */
+#app::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 90% 75% at 50% 45%, transparent 55%, rgba(4, 14, 10, 0.55) 100%);
 }
 
 button {
@@ -53,26 +88,53 @@ input {
   font-family: inherit;
 }
 
-/* 毛玻璃按钮基类 */
+/* 描金按钮基类：哑光深绿底 + 细金边 + 内高光 */
 .glass-btn {
+  position: relative;
   width: 100%;
   padding: 16px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
+  letter-spacing: 1px;
   border-radius: var(--radius);
   color: var(--text-main);
-  background: rgba(79, 124, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(79, 124, 255, 0.35);
-  transition: all 0.2s;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.12)), var(--bg-card-2);
+  border: 1px solid var(--gold-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 6px rgba(0, 0, 0, 0.3),
+    0 4px 14px rgba(0, 0, 0, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
 }
 .glass-btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98) translateY(1px);
 }
+
+/* 主按钮：描金实心，金属质感渐变 */
 .glass-btn.primary {
-  background: var(--primary);
-  box-shadow: 0 0 20px var(--primary-glow);
+  color: #2a1e08;
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 45%, var(--gold-deep) 100%);
+  border: 1px solid var(--gold-bright);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 8px rgba(90, 60, 10, 0.4),
+    0 6px 18px rgba(0, 0, 0, 0.4);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3);
 }
+.glass-btn.primary:active {
+  filter: brightness(0.96);
+}
+
+/* 幽灵按钮：仅细金描边 */
+.glass-btn.ghost {
+  background: transparent;
+  border-color: rgba(201, 162, 75, 0.25);
+  box-shadow: none;
+  color: var(--text-dim);
+}
+
 .glass-btn:disabled {
-  opacity: 0.45;
+  opacity: 0.4;
+  filter: saturate(0.6);
 }
+

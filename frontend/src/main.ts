@@ -18,7 +18,6 @@ try {
       localStorage.removeItem(key);
     }
   }
-  console.log('[MAIN] 已清理旧版本 token，请重新加入房间');
 } catch (e) {
   console.warn('[MAIN] 无法清理 localStorage:', e);
 }
