@@ -14,10 +14,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
 
-import game
-import protocol
-from manager import GameError, RoomManager
-from room import Player, Room, Round
+from backend import game, protocol
+from backend.manager import GameError, RoomManager
+from backend.room import Player, Room, Round
 
 manager = RoomManager()
 
