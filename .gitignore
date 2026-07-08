@@ -13,6 +13,7 @@ ENV/
 node_modules/
 dist/
 *.local
+*.tsbuildinfo
 
 # IDE
 .vscode/
@@ -27,4 +28,8 @@ Thumbs.db
 
 # Project specific
 backend/backend.log
+backend/static/
 frontend/frontend.log
+*.out
+deploy_package/
+*.zip

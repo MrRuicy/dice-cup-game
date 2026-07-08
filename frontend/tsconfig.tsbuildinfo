@@ -1,1 +1,0 @@
-{"root":["./src/main.ts","./src/types.ts","./src/vite-env.d.ts","./src/services/ws.ts","./src/stores/game.ts","./src/app.vue","./src/components/dice.vue","./src/components/dicecupgame.vue","./src/components/icon.vue","./src/views/homeview.vue","./src/views/roomview.vue"],"version":"5.6.3"}
