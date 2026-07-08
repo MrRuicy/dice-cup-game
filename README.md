@@ -1,3 +1,14 @@
+---
+title: 骰盅游戏
+emoji: 🎲
+colorFrom: green
+colorTo: emerald
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # 🎲 骰盅游戏 (Dice Cup Game)
 
 一个基于 WebSocket 的实时多人在线骰盅游戏，支持房间管理、多轮投掷、幸运嘉宾机制等功能。
