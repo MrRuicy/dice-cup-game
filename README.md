@@ -77,6 +77,14 @@ npm run dev
 
 访问 `http://localhost:5173` 开始游戏。
 
+## 🚀 生产部署
+
+详细部署文档请查看 [DEPLOY.md](./DEPLOY.md)，包含：
+- Systemd + Nginx 部署
+- Docker 部署
+- HTTPS 配置
+- 性能优化建议
+
 ## 📁 项目结构
 
 ```

@@ -123,7 +123,6 @@ export const useGameStore = defineStore('game', {
 
           // 延迟更新 phase，确保 round_result 先被处理
           // 这样在 ended 阶段刷新时，results 能先到达
-          const prevPhase = this.phase;
           const prevRound = this.round;
           this.round = msg.round;
 
